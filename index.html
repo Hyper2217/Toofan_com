@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Food Timetable</title>
+<style>
+  * {margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif;}
+  body {
+    background: linear-gradient(135deg, #001f2b, #000000);
+    color: #fff;
+    text-align: center;
+    padding: 40px 20px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  h1 {
+    font-size: 2.5em;
+    color: #00ffff;
+    text-shadow: 0 0 25px #00ffff;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  .date {color: #00cccc; margin-bottom: 25px;}
+
+  select {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    margin: 10px;
+    background: #00ffff;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .btns {margin-bottom: 30px;}
+  button {
+    background: #00ffff;
+    border: none;
+    color: #000;
+    padding: 10px 20px;
+    margin: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+  }
+  button:hover {background: #00cccc; transform: scale(1.05);}
+
+  .timetable {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin: 20px auto;
+    max-width: 950px;
+  }
+  .meal {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(0,255,255,0.2);
+    box-shadow: 0 0 25px rgba(0,255,255,0.2);
+    border-radius: 15px;
+    padding: 20px;
+    transition: 0.3s;
+  }
+  .meal h2 {color: #00ffff; margin-bottom: 10px;}
+  textarea {
+    width: 100%;
+    height: 100px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(0,255,255,0.2);
+    border-radius: 10px;
+    color: #fff;
+    padding: 10px;
+    resize: none;
+    outline: none;
+  }
+  textarea:focus {border-color: #00ffff; box-shadow: 0 0 10px #00ffff;}
+
+  .week {display: none; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap;}
+  .day {
+    background: rgba(0,255,255,0.1);
+    border: 1px solid rgba(0,255,255,0.3);
+    color: #00ffff;
+    padding: 10px 15px;
+    border-radius: 10px;
+    min-width: 60px;
+  }
+  footer {margin-top: 40px; color: #00cccc; font-size: 0.9em;}
+
+  /* Modal styling */
+  .modal {
+    display: none; position: fixed; z-index: 999;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    justify-content: center; align-items: center;
+  }
+  .modal-content {
+    background: #0d1b2a;
+    padding: 25px;
+    border-radius: 15px;
+    border: 1px solid #00ffff;
+    max-height: 85%;
+    overflow-y: auto;
+    width: 90%; max-width: 650px;
+    text-align: left;
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn {from{opacity:0; transform:scale(0.9);} to{opacity:1; transform:scale(1);}}
+  .close {
+    float: right; color: #00ffff;
+    font-weight: bold; cursor: pointer; font-size: 1.5em;
+  }
+  .food-item {
+    display: flex; align-items: center; gap: 15px;
+    border-bottom: 1px solid rgba(0,255,255,0.2);
+    padding: 10px 0;
+  }
+  .food-item img {width: 70px; height: 70px; border-radius: 10px; object-fit: cover;}
+  .food-item h4 {margin: 0; color: #00ffff;}
+  .recipe {
+    margin: 10px 0;
+    border-bottom: 1px solid rgba(0,255,255,0.2);
+    padding-bottom: 10px;
+  }
+  .recipe img {
+    width: 100%; border-radius: 10px; margin: 10px 0;
+  }
+  .recipe h4 {color: #00ffff;}
+  .recipe ul, .recipe ol {margin: 10px 0 10px 20px; color: #ddd;}
+</style>
+</head>
+<body>
+
+<h1 id="title">Daily Food Timetable</h1>
+<div class="date" id="today"></div>
+
+<select id="language" onchange="changeLanguage()">
+  <option value="en">English</option>
+  <option value="sw">Swahili</option>
+  <option value="fr">Français</option>
+</select>
+
+<div class="btns">
+  <button onclick="toggleWeek()">🗓️ Show Week</button>
+  <button onclick="openModal('suggestionsModal')">🌍 Food Suggestions</button>
+  <button onclick="openModal('recipesModal')">🍳 Recipes</button>
+</div>
+
+<div class="week" id="weekdays">
+  <div class="day">Mon</div><div class="day">Tue</div><div class="day">Wed</div>
+  <div class="day">Thu</div><div class="day">Fri</div><div class="day">Sat</div><div class="day">Sun</div>
+</div>
+
+<div class="timetable">
+  <div class="meal">
+    <h2 id="morningTitle">🌅 Morning</h2>
+    <textarea id="morning" placeholder="Enter breakfast..."></textarea>
+    <button onclick="saveMeal('morning')">Save Morning</button>
+  </div>
+  <div class="meal">
+    <h2 id="lunchTitle">☀️ Lunch</h2>
+    <textarea id="lunch" placeholder="Enter lunch..."></textarea>
+    <button onclick="saveMeal('lunch')">Save Lunch</button>
+  </div>
+  <div class="meal">
+    <h2 id="eveningTitle">🌙 Evening</h2>
+    <textarea id="evening" placeholder="Enter dinner..."></textarea>
+    <button onclick="saveMeal('evening')">Save Evening</button>
+  </div>
+</div>
+
+<footer>© 2025 Toofan.com | Smart Daily Planner</footer>
+
+<!-- Suggestions Modal -->
+<div class="modal" id="suggestionsModal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('suggestionsModal')">&times;</span>
+    <h3>🌍 World Food Suggestions</h3>
+    <div class="food-item"><img src="https://upload.wikimedia.org/wikipedia/commons/1/15/Sushi_platter.jpg"><div><h4>Sushi</h4><p>Japan</p></div></div>
+    <div class="food-item"><img src="https://upload.wikimedia.org/wikipedia/commons/3/39/Pizza_in_Rome_-_December_2005.jpg"><div><h4>Pizza</h4><p>Italy</p></div></div>
+    <div class="food-item"><img src="https://upload.wikimedia.org/wikipedia/commons/8/8b/Chapati_and_Beef_Stew.jpg"><div><h4>Chapati & Beef Stew</h4><p>Kenya</p></div></div>
+    <div class="food-item"><img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Biryani_Rice.jpg"><div><h4>Biryani</h4><p>India</p></div></div>
+  </div>
+</div>
+
+<!-- Recipes Modal -->
+<div class="modal" id="recipesModal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('recipesModal')">&times;</span>
+    <h3>🍳 Full Recipes</h3>
+
+    <div class="recipe">
+      <h4>1. Vegetable Omelette</h4>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Omelette_with_tomato.jpg">
+      <ul><b>Ingredients:</b>
+        <li>2 eggs</li><li>Chopped onions, tomatoes, green pepper</li><li>Salt, black pepper, oil</li>
+      </ul>
+      <ol><b>Procedure:</b>
+        <li>Beat eggs in a bowl.</li>
+        <li>Mix with chopped vegetables and seasoning.</li>
+        <li>Heat oil in a pan, pour mixture and cook both sides.</li>
+      </ol>
+    </div>
+
+    <div class="recipe">
+      <h4>2. Chicken Stir Fry</h4>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/58/Chicken_stir_fry.jpg">
+      <ul><b>Ingredients:</b>
+        <li>Chicken breast, soy sauce, garlic, vegetables, oil</li>
+      </ul>
+      <ol><b>Procedure:</b>
+        <li>Slice chicken and veggies.</li>
+        <li>Stir-fry garlic and chicken until golden.</li>
+        <li>Add veggies and soy sauce, cook for 5 mins.</li>
+      </ol>
+    </div>
+
+    <div class="recipe">
+      <h4>3. Ugali & Sukuma Wiki</h4>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Ugali_and_sukuma_wiki.jpg">
+      <ul><b>Ingredients:</b>
+        <li>2 cups maize flour</li><li>Water, kale (sukuma), oil, onions, salt</li>
+      </ul>
+      <ol><b>Procedure:</b>
+        <li>Boil water, add flour gradually while stirring until thick.</li>
+        <li>Cook kale with onions, oil, and salt.</li>
+        <li>Serve together while hot.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Date display
+  document.getElementById('today').textContent =
+    new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Load saved meals
+  window.onload = () => ['morning','lunch','evening'].forEach(id=>{
+    const val = localStorage.getItem(id);
+    if(val) document.getElementById(id).value = val;
+  });
+
+  function saveMeal(id){
+    localStorage.setItem(id, document.getElementById(id).value.trim());
+    alert(id.charAt(0).toUpperCase()+id.slice(1)+" saved!");
+  }
+
+  // Week toggle
+  function toggleWeek(){
+    const week = document.getElementById('weekdays');
+    week.style.display = week.style.display === 'flex' ? 'none' : 'flex';
+  }
+
+  // Modals
+  function openModal(id){document.getElementById(id).style.display='flex';}
+  function closeModal(id){document.getElementById(id).style.display='none';}
+  window.onclick = e=>{
+    ['suggestionsModal','recipesModal'].forEach(id=>{
+      const modal=document.getElementById(id);
+      if(e.target===modal) modal.style.display='none';
+    });
+  }
+
+  // Language change
+  const translations = {
+    sw: {
+      title: "Ratiba ya Chakula ya Kila Siku",
+      morningTitle: "🌅 Asubuhi",
+      lunchTitle: "☀️ Mchana",
+      eveningTitle: "🌙 Jioni"
+    },
+    fr: {
+      title: "Emploi du Temps Alimentaire Quotidien",
+      morningTitle: "🌅 Matin",
+      lunchTitle: "☀️ Déjeuner",
+      eveningTitle: "🌙 Soir"
+    },
+    en: {
+      title: "Daily Food Timetable",
+      morningTitle: "🌅 Morning",
+      lunchTitle: "☀️ Lunch",
+      eveningTitle: "🌙 Evening"
+    }
+  };
+  function changeLanguage(){
+    const lang = document.getElementById('language').value;
+    const t = translations[lang];
+    document.getElementById('title').textContent = t.title;
+    document.getElementById('morningTitle').textContent = t.morningTitle;
+    document.getElementById('lunchTitle').textContent = t.lunchTitle;
+    document.getElementById('eveningTitle').textContent = t.eveningTitle;
+  }
+</script>
+</body>
+</html>
